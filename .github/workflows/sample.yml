@@ -5,14 +5,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: checkoutcode
-       run: actions/checkout@v3
-    -name: setupterraform
-     run: hashicorp/setup-terraform@v1
-    -name: terraform initialization
+      run: actions/checkout@v3
+    - name: setupterraform
+      run: hashicorp/setup-terraform@v1
+    - name: terraform initialization
       run: terraform init
-    -name: terraform plan
+    - name: terraform plan
       run: terraform plan
-    -name: terraform apply
+    - name: terraform apply
       run: terraform apply -auto-approve
     env:
       ARM_CLIENT_ID: ${{secrets.ARM_CLIENT_ID}}
