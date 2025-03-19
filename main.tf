@@ -3,7 +3,7 @@ provider "azurerm"{
     
 }
 resource "azurerm_resource_group" "example" {
-  name="example-resources"
+  name="github-actions-resource"
   location="East US"
 }
 output "resource_group_name"{
