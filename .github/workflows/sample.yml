@@ -1,0 +1,22 @@
+name: aztfchk
+on: push
+jobs:
+  createrg:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkoutcode
+       run: actions/checkout@v3
+    -name: setupterraform
+     run: hashicorp/setup-terraform@v1
+    -name: terraform initialization
+      run: terraform init
+    -name: terraform plan
+      run: terraform plan
+    -name: terraform apply
+      run: terraform apply -auto-approve
+    env:
+      ARM_CLIENT_ID: ${{secrets.ARM_CLIENT_ID}}
+      ARM_CLIENT_SECRET: ${{secrets.ARM_CLIENT_SECRET}}
+      ARM_TENANT_ID: ${{secrets.ARM_TENANT_ID}}
+      ARM_SUBSCRIPTION_ID: ${{secrets.ARM_SUBSCRIPTION_ID}}
+    
