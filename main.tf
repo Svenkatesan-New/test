@@ -1,118 +1,57 @@
-provider "azurerm"{
-    features{}
-  
-}
-resource "azurerm_resource_group" "example" {
-  name="example-resources"
-  location="East US"
-}
-resource "azurerm_virtual_network" "example" {
-  name = "example-vnet"
-  location = azurerm_resource_group.example.location
-  resource_group_name = azurerm_resource_group.example.name
-  address_space = ["10.0.0.0/16"]
-}
-resource "azurerm_subnet" "example" {
-  name ="example-subnet"
-  resource_group_name = azurerm_resource_group.example.name
-  virtual_network_name=azurerm_virtual_network.example.name
-  address_prefixes = ["10.0.1.0/24"]
-  
-}
-resource "azurerm_network_security_group" "example" {
-  name = "example-nsg"
-  location = azurerm_resource_group.example.location
-  resource_group_name = azurerm_resource_group.example.name
-
- security_rule {
-    name                       = "SSH"
-    priority                   = 1000
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "22"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "HTTP"
-    priority                   = 1001
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "80"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
+provider "azurerm" {
+  features {}
+  subscription_id =  "5dfb4d57-e8e3-4bb5-8cec-d6857c3f385b"
 }
 
-# Virtual Machine (VM)
-resource "azurerm_linux_virtual_machine" "example" {
-  name                = "example-vm"
-  resource_group_name = azurerm_resource_group.example.name
-  location            = azurerm_resource_group.example.location
-  size                = "Standard_B1s"
-  admin_username      = "adminuser"
-  admin_password      = "P@ssw0rd1234"
-  network_interface_ids = [
-    azurerm_network_interface.example.id,
-  ]
-  os_disk {
-    caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
-  }
-  source_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
-    version   = "latest"
-  }
+resource "azurerm_resource_group" "rg" {
+  name     = "rg-k8s-cluster"
+  location = "East US"
 }
 
-# Network Interface
-resource "azurerm_network_interface" "example" {
-  name                = "example-nic"
-  location            = azurerm_resource_group.example.location
-  resource_group_name = azurerm_resource_group.example.name
-
-  ip_configuration {
-    name                          = "internal"
-    subnet_id                     = azurerm_subnet.example.id
-    private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.example.id
-  }
+resource "azurerm_virtual_network" "vnet" {
+  name                = "vnet-k8s-cluster"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  address_space       = ["10.0.0.0/16"]
 }
 
-# Public IP
-resource "azurerm_public_ip" "example" {
-  name                = "example-public-ip"
-  location            = azurerm_resource_group.example.location
-  resource_group_name = azurerm_resource_group.example.name
-  allocation_method   = "Dynamic"
+resource "azurerm_subnet" "subnet" {
+  name                 = "subnet-k8s-cluster"
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.0.1.0/24"]
 }
 
-# Azure Kubernetes Service (AKS)
-resource "azurerm_kubernetes_cluster" "example" {
-  name                = "example-aks-cluster"
-  location            = azurerm_resource_group.example.location
-  resource_group_name = azurerm_resource_group.example.name
-  dns_prefix          = "exampleaks"
+
+resource "azurerm_kubernetes_cluster" "aks" {
+  name                = "aks-cluster"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  dns_prefix          = "aks-cluster"
 
   default_node_pool {
     name       = "default"
-    node_count = 1
-    vm_size    = "Standard_B2s"
+    node_count = 3 
+    vm_size    = "Standard_B1ms"  
+
+    
   }
+ 
 
   identity {
     type = "SystemAssigned"
   }
+  
+  tags = {
+    Environment = "Production"
+  }
 }
 
-# Azure Blob Storage Backend Configuration
+
+# output "kubeconfig" {
+#   value = azurerm_kubernetes_cluster.aks.kube_config[0]
+#   sensitive = true
+# }
 terraform {
   backend "azurerm" {
     resource_group_name   = "newresourcegrp"
@@ -122,7 +61,3 @@ terraform {
   }
 }
 
-
-# output "resource_group_name"{
-#     value=azurerm_resource_group.example.name
-# }
